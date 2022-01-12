@@ -3,13 +3,6 @@
 A simple web interface which is able to subscribe to a MQTT topic and display
 the information.
 
-The screenshot shows an example how to keep track on what's going in your
-apartment or your house. It's not about controlling, this setup is about
-observing various states.
-
-![screenshot](screenshot.png)
-
-![screenshot](screenshot-mobile.png)
 
 What to see `mqtt-panel` in action -> http://youtu.be/Qb0UJa9kf2g
 
