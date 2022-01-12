@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+
 #
 # test-messages.py - This script publish a random MQTT messages every 2 s.
 #
@@ -11,7 +11,7 @@ import paho.mqtt.client as mqtt
 
 timestamp = int(time.time())
 
-broker = "127.0.0.1"
+broker = "192.168.0.100"
 port = 1883
 element = "home"
 areas = ["front", "back", "kitchen", "basement", "living"]

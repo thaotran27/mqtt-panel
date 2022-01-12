@@ -17,7 +17,7 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-2">
-        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">Home conditions</a>
+        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">FFU</a>
     </nav>
     <div class="container-fluid">
         <div id="status" class="alert">
@@ -28,7 +28,7 @@
                 <div class="col-6 col-md-4">
                     <div class="card-body">
                         <div class="card-title">
-                            Entrance
+                            Fan Power
                         </div>
                         <span id="label1" class="badge w-100">Unknown</span>
                     </div>
@@ -36,7 +36,7 @@
                 <div class="col-6 col-md-4">
                     <div class="card-body">
                         <div class="card-title">
-                            Back door
+                            Fan Mode
                         </div>
                         <span id="label2" class="badge w-100">Unknown</span>
                     </div>
@@ -44,7 +44,7 @@
                 <div class="col-12 col-md-4">
                     <div class="card-body">
                         <div class="card-title">
-                            Basement temperature
+                            Fan Speed
                         </div>
                         <span id="basementTempLabel" class="badge w-100">Unknown</span>
                     </div>
@@ -56,38 +56,53 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="card-title">
-                            Living room temperature
-                            <span id="livingTempLabel" class="text-muted float-right badge">Unknown</span>
+                            Fan Controller
                         </div>
                     </div>
-                    <canvas id="tempChart" width="300" height="120"></canvas>
+                    <button type="button" class="btn btn-primary" onClick="powerClick()">Power</button>
+                    <button type="button" class="btn btn-primary" onClick="manualClick()">Manual Mode</button>
+                    <button type="button" class="btn btn-primary" onClick="increaseClick()">+</button>
+                    <button type="button" class="btn btn-primary" onClick="decreaseClick()">-</button>
                 </div>
             </div>
             <div class="col-12 col-md-5">
-                <table class="table table-bordered table-sm table-striped mt-2">                    
-                    <tbody>
-                        <tr>
-                            <th>Entrance</th>
-                            <td><small id="value1">(no value received)</small></td>
-                        </tr>
-                        <tr>
-                            <th>Back door</th>
-                            <td><small id="value2">(no value received)</small></td>
-                        </tr>
-                        <tr>
-                            <th>Basement temperature</th>
-                            <td><small id="basementTempLabel">(no value received)</small></td>
-                        </tr>
-                        <tr>
-                            <th>Living room temperature</th>
-                            <td><small id="livingTempSensor">(no value received)</small></td>
-                        </tr>
-                        <tr>
-                            <th>Last MQTT message</th>
-                            <td><small id="message">no message recieved</small></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="card">
+                    <div class="card-title">
+                        Fan Controller
+                    </div>
+                    <table class="table table-bordered table-sm table-striped mt-2">                    
+                        <tbody>
+                            <tr>
+                                <th>PM1</th>
+                                <td><small id="sensorPm1">(no value received)</small></td>
+                            </tr>
+                            <tr>
+                                <th>PM2.5</th>
+                                <td><small id="sensorPm2">(no value received)</small></td>
+                            </tr>
+                            <tr>
+                                <th>PM10</th>
+                                <td><small id="sensorPm10">(no value received)</small></td>
+                            </tr>
+                            <tr>
+                                <th>CO2 concentration</th>
+                                <td><small id="sensorCo2">(no value received)</small></td>
+                            </tr>
+                            <tr>
+                                <th>Temperature</th>
+                                <td><small id="sensorTemperature">(no value received)</small></td>
+                            </tr>
+                            <tr>
+                                <th>Humidity</th>
+                                <td><small id="sensorHumidity">(no value received)</small></td>
+                            </tr>
+                            <tr>
+                                <th>Last MQTT message</th>
+                                <td><small id="message">no message recieved</small></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <hr>

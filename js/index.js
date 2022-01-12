@@ -1,11 +1,14 @@
-let host = 'localhost';
-let port = 9001;
+let host = '192.168.0.100';
+let port = 8080;
 let topic = '#';
 let useTLS = false;
 let cleansession = true;
 let reconnectTimeout = 3000;
 let tempData = new Array();
-let mqtt;
+var mqtt;
+var fanPower = "off";
+var fanMode = "on";
+var fanSpeed = 5;
 
 function MQTTconnect() {
     if (typeof path == "undefined") {
@@ -52,39 +55,38 @@ function onMessageArrived(message) {
     let area = topics[1];
 
     switch (area) {
-        case 'front':
-            $('#value1').html('(Switch value: ' + payload + ')');
-            if (payload == 'true') {
-                $('#label1').text('Closed');
-                $('#label1').removeClass('badge-danger').addClass('badge-success');
-            } else {
-                $('#label1').text('Open');
-                $('#label1').removeClass('badge-success').addClass('badge-danger');
+        case 'fan':
+            var msg = JSON.parse(payload);
+            if(msg.type == "power"){
+                if(msg.value == "on"){
+                    fanPower = "on";
+                    $('#label1').text('On');
+                    $('#label1').removeClass('badge-danger').addClass('badge-success');
+                } else {
+                    fanPower = "off";
+                    $('#label1').text('Off');
+                    $('#label1').removeClass('badge-success').addClass('badge-danger');
+                }
+            } else if (msg.type == "mode"){
+                if(msg.value == "manual"){
+                    $('#label2').text('Manual');
+                    $('#label2').removeClass('badge-danger').addClass('badge-success');
+                } else {
+                    $('#label2').text('Automatic');
+                    $('#label2').removeClass('badge-success').addClass('badge-danger');
+                }
+            } else if (msg.type == "speed"){
+                $('#basementTempLabel').text(msg.value.toString());
             }
             break;
-        case 'back':
-            $('#value2').html('(Switch value: ' + payload + ')');
-            if (payload == 'true') {
-                $('#label2').text('Closed');
-                $('#label2').removeClass('badge-danger').addClass('badge-success');
-            } else {
-                $('#label2').text('Open');
-                $('#label2').removeClass('badge-success').addClass('badge-danger');
-            }
-            break;
-        case 'living':
-            $('#livingTempSensor').html('(Sensor value: ' + payload + ')');
-            $('#livingTempLabel').text(payload + ' °C');
-            $('#livingTempLabel').addClass('badge-default');
-
-            tempData.push({
-                "timestamp": Date().slice(16, 21),
-                "temperature": parseInt(payload)
-            });
-            if (tempData.length >= 10) {
-                tempData.shift()
-            }
-            drawChart(tempData);
+        case 'aqi':
+            var msg = JSON.parse(payload);
+            $('#sensorPm1').html('(Sensor value: ' + msg.pm1 + ')');
+            $('#sensorPm2').html('(Sensor value: ' + msg.pm2 + ')');
+            $('#sensorPm10').html('(Sensor value: ' + msg.pm10 + ')');
+            $('#sensorCo2').html('(Sensor value: ' + msg.co2 + ')');
+            $('#sensorTemperature').html('(Sensor value: ' + msg.temp + ')');
+            $('#sensorHumidity').html('(Sensor value: ' + msg.humid + ')');
 
             break;
         case 'basement':
@@ -110,43 +112,79 @@ function onMessageArrived(message) {
                 }
             }
             break;
+        
+        
         default:
             console.log('Error: Data do not match the MQTT topic.');
             break;
     }
 };
 
-function drawChart(data) {
-    let ctx = document.getElementById("tempChart").getContext("2d");
 
+// This is the function which handles button clicks
+function powerClick() {
+    // create a new MQTT message with a specific payload
+    if(fanPower == "on"){
+        fanPower = "off";
+    } else {
+        fanPower = "on";
+    }
+    let data = { type: "power", value: fanPower};
+    var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
+  
+    // Set the topic it should be published to
+    mqttMessage.destinationName = "ffu/fan";
+  
+    // Publish the message
+    mqtt.send(mqttMessage);
+  }
 
-    let temperatures = []
-    let timestamps = []
+function manualClick() {
+    // create a new MQTT message with a specific payload
+    if(fanMode == "manual"){
+        fanMode = "automatic";
+    } else {
+        fanMode = "manual";
+    }
+    let data = { type: "mode", value: fanMode};
+    var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
+  
+    // Set the topic it should be published to
+    mqttMessage.destinationName = "ffu/fan";
+  
+    // Publish the message
+    mqtt.send(mqttMessage);
+  }
 
-    data.map((entry) => {
-        temperatures.push(entry.temperature);
-        timestamps.push(entry.timestamp);
-    });
+function increaseClick() {
+    // create a new MQTT message with a specific payload
+    if(fanSpeed < 9){
+        fanSpeed++;
+    }
+    let data = { type: "speed", value: fanSpeed};
+    var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
+  
+    // Set the topic it should be published to
+    mqttMessage.destinationName = "ffu/fan";
+  
+    // Publish the message
+    mqtt.send(mqttMessage);
+  }
 
-    let chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: timestamps,
-            datasets: [{
-                backgroundColor: 'rgb(255, 99, 132)',
-                borderColor: 'rgb(255, 99, 132)',
-                data: temperatures
-            }]
-        },
-        options: {
-            legend: {
-                display: false
-            }
-        }
-    });
-}
-
+function decreaseClick() {
+    // create a new MQTT message with a specific payload
+    if(fanSpeed > 1){
+        fanSpeed--;
+    }
+    let data = { type: "speed", value: fanSpeed};
+    var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
+  
+    // Set the topic it should be published to
+    mqttMessage.destinationName = "ffu/fan";
+  
+    // Publish the message
+    mqtt.send(mqttMessage);
+  }
 $(document).ready(function () {
-    drawChart(tempData);
     MQTTconnect();
 });
