@@ -12,10 +12,12 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.js"></script>
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300&display=swap" rel="stylesheet">
     <script type="text/javascript" src="js/index.js"></script>
 </head>
-<body>
+<body style="font-family: 'Outfit', sans-serif">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-2">
         <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">FFU</a>
     </nav>
@@ -23,82 +25,149 @@
         <div id="status" class="alert">
             <small>Loading...</small>
         </div>
-        <div class="card mb-2">
-            <div class="row">
-                <div class="col-6 col-md-4">
-                    <div class="card-body">
-                        <div class="card-title">
-                            Fan Power
-                        </div>
-                        <span id="label1" class="badge w-100">Unknown</span>
-                    </div>
-                </div>
-                <div class="col-6 col-md-4">
-                    <div class="card-body">
-                        <div class="card-title">
-                            Fan Mode
-                        </div>
-                        <span id="label2" class="badge w-100">Unknown</span>
-                    </div>
-                </div>
-                <div class="col-12 col-md-4">
-                    <div class="card-body">
-                        <div class="card-title">
-                            Fan Speed
-                        </div>
-                        <span id="basementTempLabel" class="badge w-100">Unknown</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+
         <div class="row">
             <div class="col-12 col-md-7 mb-2">
                 <div class="card">
                     <div class="card-body">
                         <div class="card-title">
-                            Fan Controller
+                            Fan 1 Controller
                         </div>
                     </div>
-                    <button type="button" class="btn btn-primary" onClick="powerClick()">Power</button>
-                    <button type="button" class="btn btn-primary" onClick="manualClick()">Manual Mode</button>
-                    <button type="button" class="btn btn-primary" onClick="increaseClick()">+</button>
-                    <button type="button" class="btn btn-primary" onClick="decreaseClick()">-</button>
+                    <div class="btn-group" role="group" aria-label="Basic example">
+                        <button type="button" class="btn btn-outline-primary" onClick="powerClick()">Power</button>
+                        <button type="button" class="btn btn-outline-primary" onClick="manualClick()">Manual Mode</button>
+                        <button type="button" class="btn btn-outline-primary" onClick="increaseClick()">+</button>
+                        <button type="button" class="btn btn-outline-primary" onClick="decreaseClick()">-</button>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 col-md-4">
+                            <div class="card-body">
+                                <div class="card-title">
+                                    Fan Power
+                                </div>
+                                <span id="fan-power" class="badge w-100">Unknown</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="card-body">
+                                <div class="card-title">
+                                    Fan Mode
+                                </div>
+                                <span id="fan-mode" class="badge w-100">Unknown</span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="card-body">
+                                <div class="card-title">
+                                    Fan Speed
+                                </div>
+                                <span id="fan-speed" class="badge w-100">Unknown</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-title">
+                            Fan 2 Controller
+                        </div>
+                    </div>
+                    <div class="btn-group" role="group" aria-label="Basic example">
+                        <button type="button" class="btn btn-outline-primary" onClick="powerClick()">Power</button>
+                        <button type="button" class="btn btn-outline-primary" onClick="manualClick()">Manual Mode</button>
+                        <button type="button" class="btn btn-outline-primary" onClick="increaseClick()">+</button>
+                        <button type="button" class="btn btn-outline-primary" onClick="decreaseClick()">-</button>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 col-md-4">
+                            <div class="card-body">
+                                <div class="card-title">
+                                    Fan Power
+                                </div>
+                                <span id="fan-power" class="badge w-100">Unknown</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <div class="card-body">
+                                <div class="card-title">
+                                    Fan Mode
+                                </div>
+                                <span id="fan-mode" class="badge w-100">Unknown</span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="card-body">
+                                <div class="card-title">
+                                    Fan Speed
+                                </div>
+                                <span id="fan-speed" class="badge w-100">Unknown</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-12 col-md-5">
                 <div class="card">
                     <div class="card-title">
-                        Fan Controller
+                        Sensor Data
                     </div>
                     <table class="table table-bordered table-sm table-striped mt-2">                    
                         <tbody>
                             <tr>
                                 <th>PM1</th>
-                                <td><small id="sensorPm1">(no value received)</small></td>
+                                <td>
+                                    <small id="sensorPm1">(no value received)</small>
+                                    <div class="progress">
+                                        <div id="sensorPm1Bar" class="progress-bar" role="progressbar" style="width: 25%"></div>
+                                    </div>
+                                </td>
                             </tr>
                             <tr>
                                 <th>PM2.5</th>
-                                <td><small id="sensorPm2">(no value received)</small></td>
+                                <td>
+                                    <small id="sensorPm2">(no value received)</small>
+                                    <div class="progress">
+                                        <div id="sensorPm2Bar" class="progress-bar" role="progressbar" style="width: 25%"></div>
+                                    </div>
+                                </td>
                             </tr>
                             <tr>
                                 <th>PM10</th>
-                                <td><small id="sensorPm10">(no value received)</small></td>
+                                <td>
+                                    <small id="sensorPm10">(no value received)</small>
+                                    <div class="progress">
+                                        <div id="sensorPm10Bar" class="progress-bar" role="progressbar" style="width: 25%"></div>
+                                    </div>
+                                </td>
                             </tr>
                             <tr>
                                 <th>CO2 concentration</th>
-                                <td><small id="sensorCo2">(no value received)</small></td>
+                                <td>
+                                    <small id="sensorCo2">(no value received)</small>
+                                    <div class="progress">
+                                        <div id="sensorCo2Bar" class="progress-bar" role="progressbar" style="width: 25%"></div>
+                                    </div>
+                                </td>
                             </tr>
                             <tr>
                                 <th>Temperature</th>
-                                <td><small id="sensorTemperature">(no value received)</small></td>
+                                <td>
+                                    <small id="sensorTemperature">(no value received)</small>
+                                    <div class="progress">
+                                        <div id="sensorTempBar" class="progress-bar" role="progressbar" style="width: 25%"></div>
+                                    </div>
+                                </td>
                             </tr>
                             <tr>
                                 <th>Humidity</th>
-                                <td><small id="sensorHumidity">(no value received)</small></td>
-                            </tr>
-                            <tr>
-                                <th>Last MQTT message</th>
-                                <td><small id="message">no message recieved</small></td>
+                                <td>
+                                    <small id="sensorHumidity">(no value received)</small>
+                                    <div class="progress">
+                                        <div id="sensorHumidBar" class="progress-bar" role="progressbar" style="width: 25%"></div>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -106,11 +175,6 @@
             </div>
         </div>
         <hr>
-        <footer class="text-center mt-10">
-            <small>
-                <a href="https://github.com/fabaff/mqtt-panel">forked from github.com/fabaff/mqtt-panel</a>
-            </small>
-        </footer>
     </div>
 </body>
 </html>

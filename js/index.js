@@ -9,6 +9,7 @@ var mqtt;
 var fanPower = "off";
 var fanMode = "on";
 var fanSpeed = 5;
+var elem;
 
 function MQTTconnect() {
     if (typeof path == "undefined") {
@@ -50,78 +51,64 @@ function onMessageArrived(message) {
     let topic = message.destinationName;
     let payload = message.payloadString;
     console.log("Topic: " + topic + ", Message payload: " + payload);
-    $('#message').html(topic + ', ' + payload);
     let topics = topic.split('/');
     let area = topics[1];
 
     switch (area) {
-        case 'fan':
+        case 'state':
             var msg = JSON.parse(payload);
-            if(msg.type == "power"){
-                if(msg.value == "on"){
-                    fanPower = "on";
-                    $('#label1').text('On');
-                    $('#label1').removeClass('badge-danger').addClass('badge-success');
-                } else {
-                    fanPower = "off";
-                    $('#label1').text('Off');
-                    $('#label1').removeClass('badge-success').addClass('badge-danger');
-                }
-            } else if (msg.type == "mode"){
-                if(msg.value == "manual"){
-                    $('#label2').text('Manual');
-                    $('#label2').removeClass('badge-danger').addClass('badge-success');
-                } else {
-                    $('#label2').text('Automatic');
-                    $('#label2').removeClass('badge-success').addClass('badge-danger');
-                }
-            } else if (msg.type == "speed"){
-                $('#basementTempLabel').text(msg.value.toString());
+            if(msg.power == "on"){
+                fanPower = "on";
+                $('#fan-power').text('On');
+                $('#fan-power').removeClass('badge-danger').addClass('badge-success');
+            } else {
+                fanPower = "off";
+                $('#fan-power').text('Off');
+                $('#fan-power').removeClass('badge-success').addClass('badge-danger');
             }
+            if(msg.mode == "manual"){
+                $('#fan-mode').text('Manual');
+                $('#fan-mode').removeClass('badge-danger').addClass('badge-success');
+            } else {
+                $('#fan-mode').text('Automatic');
+                $('#fan-mode').removeClass('badge-success').addClass('badge-danger');
+            }
+            
+            $('#fan-speed').text(msg.speed.toString());
             break;
         case 'aqi':
             var msg = JSON.parse(payload);
             $('#sensorPm1').html('(Sensor value: ' + msg.pm1 + ')');
+            changeProgress(document.getElementById("sensorPm1Bar"), msg.pm1);
             $('#sensorPm2').html('(Sensor value: ' + msg.pm2 + ')');
+            changeProgress(document.getElementById("sensorPm2Bar"), msg.pm2);
             $('#sensorPm10').html('(Sensor value: ' + msg.pm10 + ')');
+            changeProgress(document.getElementById("sensorPm10Bar"), msg.pm10);
             $('#sensorCo2').html('(Sensor value: ' + msg.co2 + ')');
-            $('#sensorTemperature').html('(Sensor value: ' + msg.temp + ')');
-            $('#sensorHumidity').html('(Sensor value: ' + msg.humid + ')');
-
-            break;
-        case 'basement':
-            $('#basementTempSensor').html('(Sensor value: ' + payload + ')');
-            if (payload >= 25) {
-                $('#basementTempLabel').text(payload + ' °C - too hot');
-                $('#basementTempLabel').removeClass('badge-warning badge-success badge-info badge-primary').addClass('badge-danger');
-            } else if (payload >= 21) {
-                $('#basementTempLabel').text(payload + ' °C - hot');
-                $('#basementTempLabel').removeClass('badge-danger badge-success badge-info badge-primary').addClass('badge-warning');
-            } else if (payload >= 18) {
-                $('#basementTempLabel').text(payload + ' °C - normal');
-                $('#basementTempLabel').removeClass('badge-danger badge-warning badge-info badge-primary').addClass('badge-success');
-            } else if (payload >= 15) {
-                $('#basementTempLabel').text(payload + ' °C - low');
-                $('#basementTempLabel').removeClass('badge-danger badge-warning badge-success badge-primary').addClass('badge-info');
-            } else if (mpayload <= 12) {
-                $('#basementTempLabel').text(payload + ' °C - too low');
-                $('#basementTempLabel').removeClass('badge-danger badge-warning badge-success badge-info').addClass('badge-primary');
-                basementTemp.push(parseInt(payload));
-                if (basementTemp.length >= 20) {
-                    basementTemp.shift()
-                }
+            var tempCo2;
+            if(msg.co2 < 300) {
+                tempCo2 = 0;
+            } else if (msg.co2 > 3000) {
+                tempCo2 = 100;
+            } else {
+                tempCo2 = (msg.co2 - 300) * 100/(3000 - 300);
             }
-            break;
-        
+            changeProgress(document.getElementById("sensorCo2Bar"), tempCo2);
+            $('#sensorTemperature').html('(Sensor value: ' + msg.temp + ')');
+            changeProgress(document.getElementById("sensorTempBar"), msg.temp);
+            $('#sensorHumidity').html('(Sensor value: ' + msg.humid + ')');
+            changeProgress(document.getElementById("sensorHumidBar"), msg.humid);
+
+            break;        
         
         default:
-            console.log('Error: Data do not match the MQTT topic.');
+            // console.log('Error: Data do not match the MQTT topic.');
             break;
     }
 };
 
 
-// This is the function which handles button clicks
+// functions which handle button clicks
 function powerClick() {
     // create a new MQTT message with a specific payload
     if(fanPower == "on"){
@@ -133,7 +120,7 @@ function powerClick() {
     var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
   
     // Set the topic it should be published to
-    mqttMessage.destinationName = "ffu/fan";
+    mqttMessage.destinationName = "ffu/set/fan";
   
     // Publish the message
     mqtt.send(mqttMessage);
@@ -142,7 +129,7 @@ function powerClick() {
 function manualClick() {
     // create a new MQTT message with a specific payload
     if(fanMode == "manual"){
-        fanMode = "automatic";
+        fanMode = "auto";
     } else {
         fanMode = "manual";
     }
@@ -150,41 +137,47 @@ function manualClick() {
     var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
   
     // Set the topic it should be published to
-    mqttMessage.destinationName = "ffu/fan";
+    mqttMessage.destinationName = "ffu/set/fan";
   
     // Publish the message
     mqtt.send(mqttMessage);
   }
 
 function increaseClick() {
-    // create a new MQTT message with a specific payload
-    if(fanSpeed < 9){
-        fanSpeed++;
-    }
-    let data = { type: "speed", value: fanSpeed};
+    if(fanMode == "manual") {
+        // create a new MQTT message with a specific payload
+    let data = { type: "speed", value: '+'};
     var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
-  
+    
     // Set the topic it should be published to
-    mqttMessage.destinationName = "ffu/fan";
-  
-    // Publish the message
+    mqttMessage.destinationName = "ffu/set/fan";
+    
+        // Publish the message
     mqtt.send(mqttMessage);
-  }
+    }
+}
 
 function decreaseClick() {
-    // create a new MQTT message with a specific payload
-    if(fanSpeed > 1){
-        fanSpeed--;
+    if(fanMode == "manual") {
+        // create a new MQTT message with a specific payload
+        let data = { type: "speed", value: '-'};
+        var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
+    
+        // Set the topic it should be published to
+        mqttMessage.destinationName = "ffu/set/fan";
+    
+        // Publish the message
+        mqtt.send(mqttMessage);
     }
-    let data = { type: "speed", value: fanSpeed};
-    var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
-  
-    // Set the topic it should be published to
-    mqttMessage.destinationName = "ffu/fan";
-  
-    // Publish the message
-    mqtt.send(mqttMessage);
-  }
+}
+
+function changeProgress(elem, width) {
+    if(width > 100){
+        width = 100;
+    }
+    elem.style.width = width + "%";
+}
+
 $(document).ready(function () {
     MQTTconnect();
 });
