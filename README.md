@@ -79,3 +79,9 @@ $ mosquitto_sub -V mqttv311 -h localhost -d -t home/#
 ## License
 
 `mqtt-panel` licensed under MIT, for more details check LICENSE.
+
+## How to host on Raspi
+- sudo install apache
+- git clone repo mqtt-panel
+- copy index.html and js dir to /var/www/html dir
+- use 192.168.0.100 on web browser with local wifi connected device
