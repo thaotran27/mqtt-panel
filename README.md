@@ -85,3 +85,9 @@ $ mosquitto_sub -V mqttv311 -h localhost -d -t home/#
 - git clone repo mqtt-panel
 - copy index.html and js dir to /var/www/html dir
 - use 192.168.0.100 on web browser with local wifi connected device
+
+## How to host on raspi
+- sudo install apache
+- git clone repo mqtt-panel
+- copy index.html and js dir to /var/www/html dir
+- use 192.168.0.100 on web browser with local wifi connected device
