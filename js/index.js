@@ -10,6 +10,8 @@ var fanPower = "off";
 var fanMode = "on";
 var fanSpeed = 5;
 var elem;
+var fanState = {};
+var aqi = {};
 
 function MQTTconnect() {
     if (typeof path == "undefined") {
@@ -53,70 +55,93 @@ function onMessageArrived(message) {
     console.log("Topic: " + topic + ", Message payload: " + payload);
     let topics = topic.split('/');
     let area = topics[1];
+    var msg = JSON.parse(payload);
 
     switch (area) {
         case 'state':
-            var msg = JSON.parse(payload);
-            if(msg.power == "on"){
-                fanPower = "on";
-                $('#fan-power').text('On');
-                $('#fan-power').removeClass('badge-danger').addClass('badge-success');
-            } else {
-                fanPower = "off";
-                $('#fan-power').text('Off');
-                $('#fan-power').removeClass('badge-success').addClass('badge-danger');
-            }
-            if(msg.mode == "manual"){
-                $('#fan-mode').text('Manual');
-                $('#fan-mode').removeClass('badge-danger').addClass('badge-success');
-            } else {
-                $('#fan-mode').text('Automatic');
-                $('#fan-mode').removeClass('badge-success').addClass('badge-danger');
-            }
-            
-            $('#fan-speed').text(msg.speed.toString());
+            handleFanPayload(msg)
             break;
         case 'aqi':
-            var msg = JSON.parse(payload);
-            $('#sensorPm1').html('(Sensor value: ' + msg.pm1 + ')');
-            changeProgress(document.getElementById("sensorPm1Bar"), msg.pm1);
-            $('#sensorPm2').html('(Sensor value: ' + msg.pm2 + ')');
-            changeProgress(document.getElementById("sensorPm2Bar"), msg.pm2);
-            $('#sensorPm10').html('(Sensor value: ' + msg.pm10 + ')');
-            changeProgress(document.getElementById("sensorPm10Bar"), msg.pm10);
-            $('#sensorCo2').html('(Sensor value: ' + msg.co2 + ')');
-            var tempCo2;
-            if(msg.co2 < 300) {
-                tempCo2 = 0;
-            } else if (msg.co2 > 3000) {
-                tempCo2 = 100;
-            } else {
-                tempCo2 = (msg.co2 - 300) * 100/(3000 - 300);
-            }
-            changeProgress(document.getElementById("sensorCo2Bar"), tempCo2);
-            $('#sensorTemperature').html('(Sensor value: ' + msg.temp + ')');
-            changeProgress(document.getElementById("sensorTempBar"), msg.temp);
-            $('#sensorHumidity').html('(Sensor value: ' + msg.humid + ')');
-            changeProgress(document.getElementById("sensorHumidBar"), msg.humid);
-
+            handleSensorPayload(msg)
             break;        
-        
         default:
-            // console.log('Error: Data do not match the MQTT topic.');
+            console.log('Error: Data do not match the MQTT topic.');
             break;
     }
 };
 
 
+function handleFanPayload(msg) {
+    if(msg.power == "on"){
+        fanState["power"] = "on"
+        $('#fan-power').text('On');
+        $('#fan-power').removeClass('badge-danger').addClass('badge-success');
+    } else {
+        fanState["power"] = "off"
+        $('#fan-power').text('Off');
+        $('#fan-power').removeClass('badge-success').addClass('badge-danger');
+    }
+    if(msg.mode == "manual"){
+        fanState["mode"] = "manual"
+        $('#fan-mode').text('Manual');
+        $('#fan-mode').removeClass('badge-danger').addClass('badge-success');
+    } else {
+        fanState["mode"] = "auto"
+        $('#fan-mode').text('Automatic');
+        $('#fan-mode').removeClass('badge-success').addClass('badge-danger');
+    }
+
+    fanState["speed"] = msg.speed
+    $('#fan-speed').text(msg.speed.toString());
+}
+
+function handleSensorPayload(msg) {
+    $('#sensorPm1').html('(Sensor value: ' + msg.pm1 + ')');
+    changeProgress(document.getElementById("sensorPm1Bar"), msg.pm1);
+    aqi["pm1"] = msg.pm1
+
+    $('#sensorPm2').html('(Sensor value: ' + msg.pm2 + ')');
+    changeProgress(document.getElementById("sensorPm2Bar"), msg.pm2);
+    aqi["pm2"] = msg.pm2
+
+    $('#sensorPm10').html('(Sensor value: ' + msg.pm10 + ')');
+    changeProgress(document.getElementById("sensorPm10Bar"), msg.pm10);
+    aqi["pm10"] = msg.pm10
+
+    $('#sensorCo2').html('(Sensor value: ' + msg.co2 + ')');
+    var tempCo2;
+    if(msg.co2 < 300) {
+        tempCo2 = 0;
+    } else if (msg.co2 > 3000) {
+        tempCo2 = 100;
+    } else {
+        tempCo2 = (msg.co2 - 300) * 100/(3000 - 300);
+    }
+    changeProgress(document.getElementById("sensorCo2Bar"), tempCo2);
+    aqi["co2"] = msg.co2
+
+    $('#sensorTemperature').html('(Sensor value: ' + msg.temp + ')');
+    changeProgress(document.getElementById("sensorTempBar"), msg.temp);
+    aqi["temp"] = msg.temp
+
+    $('#sensorHumidity').html('(Sensor value: ' + msg.humid + ')');
+    changeProgress(document.getElementById("sensorHumidBar"), msg.humid);
+    aqi["humid"] = msg.humid
+}
+
+function autoControl() {
+    
+}
+
 // functions which handle button clicks
 function powerClick() {
     // create a new MQTT message with a specific payload
-    if(fanPower == "on"){
-        fanPower = "off";
+    if(fanState["power"] == "on"){
+        fanState["power"] = "off";
     } else {
-        fanPower = "on";
+        fanState["power"] = "on";
     }
-    let data = { type: "power", value: fanPower};
+    let data = { type: "power", value: fanState["power"]};
     var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
   
     // Set the topic it should be published to
@@ -128,12 +153,12 @@ function powerClick() {
 
 function manualClick() {
     // create a new MQTT message with a specific payload
-    if(fanMode == "manual"){
-        fanMode = "auto";
+    if(fanState["mode"] == "manual"){
+        fanState["mode"] = "auto";
     } else {
-        fanMode = "manual";
+        fanState["mode"] = "manual";
     }
-    let data = { type: "mode", value: fanMode};
+    let data = { type: "mode", value: fanState["mode"]};
     var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
   
     // Set the topic it should be published to
@@ -144,7 +169,7 @@ function manualClick() {
   }
 
 function increaseClick() {
-    if(fanMode == "manual") {
+    if(fanState["mode"] == "manual") {
         // create a new MQTT message with a specific payload
     let data = { type: "speed", value: '+'};
     var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
@@ -158,7 +183,7 @@ function increaseClick() {
 }
 
 function decreaseClick() {
-    if(fanMode == "manual") {
+    if(fanState["mode"] == "manual") {
         // create a new MQTT message with a specific payload
         let data = { type: "speed", value: '-'};
         var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
