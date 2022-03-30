@@ -6,12 +6,20 @@ let cleansession = true;
 let reconnectTimeout = 3000;
 let tempData = new Array();
 var mqtt;
-var fanPower = "off";
-var fanMode = "on";
-var fanSpeed = 5;
 var elem;
 var fanState = {};
 var aqi = {};
+var sumErrorCo2 = 0;
+var sumErrorPm2 = 0;
+
+var kP_co2 = 4;
+var kI_co2 = 0.1;
+var kP_pm = 4;
+var kI_pm = 0.1;
+var kCo2 = 0.005; // How much control to co2
+var kPm2 = 0.005; // How much control to co2
+
+
 
 function MQTTconnect() {
     if (typeof path == "undefined") {
@@ -34,6 +42,8 @@ function MQTTconnect() {
     mqtt.onMessageArrived = onMessageArrived;
     console.log("Host: " + host + ", Port: " + port + ", Path: " + path + " TLS: " + useTLS);
     mqtt.connect(options);
+    setTimeout(autoControl(), 5000);
+
 };
 
 function onConnect() {
@@ -130,7 +140,23 @@ function handleSensorPayload(msg) {
 }
 
 function autoControl() {
-    
+    if (fanState["mode"] == "manual") {
+        return
+    }
+    errorPm2 = aqi["pm2"] - 5;
+    errorCo2 = aqi["co2"] - 600;
+
+    pwm = (kP_co2 * errorCo2 + kI_co2 * sumErrorCo2) * kCo2 + (kP_pm * errorPm2 + kI_co2 * sumErrorPm2) * kPm2 ; 
+
+    sumErrorCo2 += errorCo2
+    sumErrorPm2 += errorPm2
+    console.log("Auto control on")
+
+    if (pwm < fanState["speed"]) {
+        sendSpeedCommand('-')
+    } else if (pwm > fanState["speed"]){
+        sendSpeedCommand ('+')
+    }
 }
 
 // functions which handle button clicks
@@ -170,29 +196,23 @@ function manualClick() {
 
 function increaseClick() {
     if(fanState["mode"] == "manual") {
-        // create a new MQTT message with a specific payload
-    let data = { type: "speed", value: '+'};
+        sendSpeedCommand('+')
+    }
+}
+
+function sendSpeedCommand(value) {
+    let data = { type: "speed", value: value};
     var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
-    
     // Set the topic it should be published to
     mqttMessage.destinationName = "ffu/set/fan";
-    
-        // Publish the message
+
+    // Publish the message
     mqtt.send(mqttMessage);
-    }
 }
 
 function decreaseClick() {
     if(fanState["mode"] == "manual") {
-        // create a new MQTT message with a specific payload
-        let data = { type: "speed", value: '-'};
-        var mqttMessage = new Paho.MQTT.Message(JSON.stringify(data));
-    
-        // Set the topic it should be published to
-        mqttMessage.destinationName = "ffu/set/fan";
-    
-        // Publish the message
-        mqtt.send(mqttMessage);
+        sendSpeedCommand('-')
     }
 }
 
