@@ -12,12 +12,12 @@ var aqi = {};
 var sumErrorCo2 = 0;
 var sumErrorPm2 = 0;
 
-var kP_co2 = 4;
-var kI_co2 = 0.1;
-var kP_pm = 4;
-var kI_pm = 0.1;
-var kCo2 = 0.005; // How much control to co2
-var kPm2 = 0.005; // How much control to co2
+let kP_co2 = 4;
+let kI_co2 = 0.1;
+let kP_pm = 4;
+let kI_pm = 0.1;
+let kCo2 = 0.005; // How much control to co2
+let kPm2 = 0.005; // How much control to co2
 
 
 
@@ -42,8 +42,8 @@ function MQTTconnect() {
     mqtt.onMessageArrived = onMessageArrived;
     console.log("Host: " + host + ", Port: " + port + ", Path: " + path + " TLS: " + useTLS);
     mqtt.connect(options);
-    setTimeout(autoControl(), 5000);
-
+    sumErrorCo2 = 0
+    sumErrorPm2 = 0
 };
 
 function onConnect() {
@@ -103,6 +103,7 @@ function handleFanPayload(msg) {
 
     fanState["speed"] = msg.speed
     $('#fan-speed').text(msg.speed.toString());
+
 }
 
 function handleSensorPayload(msg) {
@@ -137,6 +138,7 @@ function handleSensorPayload(msg) {
     $('#sensorHumidity').html('(Sensor value: ' + msg.humid + ')');
     changeProgress(document.getElementById("sensorHumidBar"), msg.humid);
     aqi["humid"] = msg.humid
+    autoControl()
 }
 
 function autoControl() {
